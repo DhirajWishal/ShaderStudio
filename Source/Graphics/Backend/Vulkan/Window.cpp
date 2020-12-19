@@ -32,8 +32,9 @@ namespace Graphics
 
 			void CursorPositionCallback(GLFWwindow* window, double xOffset, double yOffset)
 			{
-				static_cast<VulkanWindow*>(glfwGetWindowUserPointer(window))->GetInputCenter()->MousePositionX = static_cast<float>(xOffset);
-				static_cast<VulkanWindow*>(glfwGetWindowUserPointer(window))->GetInputCenter()->MousePositionY = static_cast<float>(yOffset);
+				VulkanWindow* pWindow = static_cast<VulkanWindow*>(glfwGetWindowUserPointer(window));
+				pWindow->GetInputCenter()->MousePositionX = static_cast<float>(xOffset);
+				pWindow->GetInputCenter()->MousePositionY = static_cast<float>(yOffset);
 			}
 
 			void MouseButtonCallback(GLFWwindow* window, I32 button, I32 action, I32 mods)
@@ -59,10 +60,9 @@ namespace Graphics
 
 			void ApplicationResizeCallback(GLFWwindow* window, I32 width, I32 height)
 			{
-				auto windowHandle = static_cast<VulkanWindow*>(glfwGetWindowUserPointer(window));
-				//windowHandle->windowWidth = width;
-				//windowHandle->windowHeight = height;
-				//windowHandle->pEventPool->frameBufferResized();
+				VulkanWindow* pWindow = static_cast<VulkanWindow*>(glfwGetWindowUserPointer(window));
+				pWindow->GetInputCenter()->IsWindowResized = true;
+				pWindow->UpdateWindowExtent(width, height);
 			}
 
 			void WindowCloseCallback(GLFWwindow* window)

@@ -82,57 +82,94 @@ namespace Graphics
 			}
 		}
 
+		SwapChainSupportDetails QuerySwapChainSupportDetails(VkPhysicalDevice vPhysicalDevice, VkSurfaceKHR vSurface)
+		{
+			SwapChainSupportDetails supportDetails = {};
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vPhysicalDevice, vSurface, &supportDetails.capabilities);
+
+			UI32 formatCount = 0;
+			vkGetPhysicalDeviceSurfaceFormatsKHR(vPhysicalDevice, vSurface, &formatCount, nullptr);
+
+			if (formatCount != 0)
+			{
+				supportDetails.formats.resize(formatCount);
+				vkGetPhysicalDeviceSurfaceFormatsKHR(vPhysicalDevice, vSurface, &formatCount, supportDetails.formats.data());
+			}
+
+			UI32 presentModeCount = 0;
+			vkGetPhysicalDeviceSurfacePresentModesKHR(vPhysicalDevice, vSurface, &presentModeCount, nullptr);
+
+			if (presentModeCount != 0)
+			{
+				supportDetails.presentModes.resize(presentModeCount);
+				vkGetPhysicalDeviceSurfacePresentModesKHR(vPhysicalDevice, vSurface, &presentModeCount, supportDetails.presentModes.data());
+			}
+
+			return supportDetails;
+		}
+
 		void SwapChain::Initialize(VulkanDevice* pDevice, UI32 width, UI32 height, float xOffset, float yOffset)
 		{
-			SwapChainSupportDetails vSupport = pDevice->vSwapChainSupportDetails;
+			SwapChainSupportDetails& vSupport = pDevice->GetSwapChainSupportDetails();
 			VkSurfaceFormatKHR surfaceFormat = _Helpers::ChooseSwapSurfaceFormat(vSupport.formats);
 			VkPresentModeKHR presentMode = _Helpers::ChooseSwapPresentMode(vSupport.presentModes);
 
-			VkSwapchainCreateInfoKHR createInfo = {};
-			createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-			createInfo.surface = pDevice->vSurface;
-			createInfo.minImageCount = pDevice->GetMaxFrameBufferCount();
-			createInfo.imageFormat = surfaceFormat.format;
-			createInfo.imageColorSpace = surfaceFormat.colorSpace;
-			createInfo.imageExtent = { width, height };
-			createInfo.imageArrayLayers = 1;
-			createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+			VkCompositeAlphaFlagBitsKHR surfaceComposite = static_cast<VkCompositeAlphaFlagBitsKHR>(pDevice->GetSurfaceCapabilities().supportedCompositeAlpha);
+			surfaceComposite = (surfaceComposite & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
+				? VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR
+				: (surfaceComposite & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)
+				? VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR
+				: (surfaceComposite & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR)
+				? VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR
+				: VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
 
-			UI32 queueFamilyindices[] = {
+			VkSwapchainCreateInfoKHR vCI = {};
+			vCI.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+			vCI.flags = VK_NULL_HANDLE;
+			vCI.pNext = VK_NULL_HANDLE;
+			vCI.surface = pDevice->vSurface;
+			vCI.minImageCount = pDevice->GetMaxFrameBufferCount();
+			vCI.imageFormat = surfaceFormat.format;
+			vCI.imageColorSpace = surfaceFormat.colorSpace;
+			vCI.imageExtent = { width, height };
+			vCI.imageArrayLayers = 1;
+			vCI.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+			UI32 queueFamilyindices[2] = {
 					pDevice->vQueue.mGraphicsFamily.value(),
 					pDevice->vQueue.mTransferFamily.value()
 			};
 
 			if (pDevice->vQueue.mGraphicsFamily != pDevice->vQueue.mTransferFamily)
 			{
-				createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-				createInfo.queueFamilyIndexCount = 2;
-				createInfo.pQueueFamilyIndices = queueFamilyindices;
+				vCI.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+				vCI.queueFamilyIndexCount = 2;
+				vCI.pQueueFamilyIndices = queueFamilyindices;
 			}
 			else
 			{
-				createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-				createInfo.queueFamilyIndexCount = 0;
-				createInfo.pQueueFamilyIndices = nullptr;
+				vCI.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+				vCI.queueFamilyIndexCount = 0;
+				vCI.pQueueFamilyIndices = nullptr;
 			}
 
-			createInfo.preTransform = vSupport.capabilities.currentTransform;
-			createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-			createInfo.presentMode = presentMode;
-			createInfo.clipped = VK_TRUE;
-			createInfo.oldSwapchain = VK_NULL_HANDLE;
+			vCI.preTransform = vSupport.capabilities.currentTransform;
+			vCI.compositeAlpha = surfaceComposite;
+			vCI.presentMode = presentMode;
+			vCI.clipped = VK_TRUE;
+			vCI.oldSwapchain = VK_NULL_HANDLE;
 
 			// Create the Vulkan Swap Chain.
-			VK_ASSERT(vkCreateSwapchainKHR(pDevice->vLogicalDevice, &createInfo, nullptr, &vSwapChain), "Failed to create the Vulkan Swap Chain!");
+			VK_ASSERT(vkCreateSwapchainKHR(pDevice->vLogicalDevice, &vCI, nullptr, &vSwapChain), "Failed to create the Vulkan Swap Chain!");
 
 			// Get the swap chain images.
-			vImages.resize(createInfo.minImageCount);
-			VK_ASSERT(vkGetSwapchainImagesKHR(pDevice->vLogicalDevice, vSwapChain, &createInfo.minImageCount, vImages.data()), "Failed to get the Vulkan Swap Chain Images!");
-		
+			vImages.resize(vCI.minImageCount);
+			VK_ASSERT(vkGetSwapchainImagesKHR(pDevice->vLogicalDevice, vSwapChain, &vCI.minImageCount, vImages.data()), "Failed to get the Vulkan Swap Chain Images!");
+
 			// Create swap chain image views.
-			vImageViews = std::move(_Helpers::CreateImageViews(vImages, createInfo.imageFormat, pDevice->vLogicalDevice));
-		
-			vFormat = createInfo.imageFormat;
+			vImageViews = std::move(_Helpers::CreateImageViews(vImages, vCI.imageFormat, pDevice->vLogicalDevice));
+
+			vFormat = vCI.imageFormat;
 		}
 
 		void SwapChain::Terminate(VulkanDevice* pDevice)

@@ -4,7 +4,8 @@
 #pragma once
 
 #include "Graphics/Core/GDevice.h"
-#include "Device.h"
+#include "RenderTarget/SwapChain.h"
+#include "Queue.h"
 
 namespace Graphics
 {
@@ -42,8 +43,10 @@ namespace Graphics
 			void CreateSurface();
 			void DestroySurface();
 
+			void CreatePhysicalDevice(const std::vector<const char*>& deviceExtensions);
+			void CreateLogicalDevice(const std::vector<const char*>& deviceExtensions);
+
 			void QuerySurfaceCapabilities();
-			void QueryPhysicalDeviceProperties();
 
 			void GetMaxSupportedSampleCount();
 

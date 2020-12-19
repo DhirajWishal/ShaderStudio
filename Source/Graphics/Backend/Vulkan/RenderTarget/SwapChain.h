@@ -12,6 +12,24 @@ namespace Graphics
 	{
 		class VulkanDevice;
 
+		/**
+		 * Structure containing support details for a Vulkan Swap Chain.
+		 */
+		struct SwapChainSupportDetails {
+			VkSurfaceCapabilitiesKHR capabilities = {};			// Swap Chain capabilities.
+			std::vector<VkSurfaceFormatKHR> formats = {};		// Swap Chain formats.
+			std::vector<VkPresentModeKHR> presentModes = {};	// Swap Chain present modes.
+		};
+
+		/**
+		 * Query swap chain support details.
+		 *
+		 * @param vPhysicalDevice: The physical device to be checked for.
+		 * @param vSurface: The surface to be checked with.
+		 * @return SwapChainSupportDetails structure.
+		 */
+		SwapChainSupportDetails QuerySwapChainSupportDetails(VkPhysicalDevice vPhysicalDevice, VkSurfaceKHR vSurface);
+
 		class SwapChain {
 		public:
 			SwapChain() {}

@@ -157,9 +157,9 @@ namespace Graphics
 			// Application info.
 			VkApplicationInfo appInfo = {};
 			appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-			appInfo.pApplicationName = "Dynamik Engine";
+			appInfo.pApplicationName = "Shader Studio";
 			appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-			appInfo.pEngineName = "Dynamik";
+			appInfo.pEngineName = "ShaderStudio";
 			appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 			appInfo.apiVersion = VK_API_VERSION_1_2;
 
@@ -181,7 +181,7 @@ namespace Graphics
 				createInfo.ppEnabledLayerNames = validationLayers.data();
 
 				debugCreateInfo = CreateDebugMessengerCreateInfo();
-				createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+				createInfo.pNext = static_cast<VkDebugUtilsMessengerCreateInfoEXT*>(&debugCreateInfo);
 			}
 			else
 			{

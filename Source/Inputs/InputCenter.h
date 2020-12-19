@@ -158,5 +158,6 @@ namespace Inputs
 		float MouseScrollDown = 0.0f;
 
 		bool IsWindowOpen = true;
+		bool IsWindowResized = false;
 	};
 }

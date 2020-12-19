@@ -26,6 +26,8 @@ namespace Graphics
 		virtual void PollInputs() {}
 
 		Inputs::InputCenter* GetInputCenter() const { return const_cast<Inputs::InputCenter*>(&mInputCenter); }
+
+		void UpdateWindowExtent(UI32 width, UI32 height) { mExtent = WindowExtent(width, height); }
 		WindowExtent GetExtent() const { return mExtent; }
 
 	protected:
